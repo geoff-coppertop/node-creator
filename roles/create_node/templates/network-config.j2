@@ -1,0 +1,17 @@
+version: 2
+ethernets:
+  eth0:
+    dhcp4: no
+    dhcp6: no
+    addresses:
+      - {{ node_ip }}/24
+    gateway4: {{ gateway_ip }}
+    nameservers:
+      search:
+{% for search_dmoain in search_domains %}
+      - {{ search_dmoain }}
+{% endfor %}
+      addresses:
+{% for nameserver in nameservers %}
+      - {{ nameserver }}
+{% endfor %}

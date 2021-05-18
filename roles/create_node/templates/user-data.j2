@@ -1,0 +1,60 @@
+#cloud-config
+# vim: syntax=yaml
+#
+
+# Set your hostname here, the manage_etc_hosts will update the hosts file entries as well
+hostname: {{ hostname }}
+manage_etc_hosts: true
+# don't write debian.org into apt mirrors
+apt_preserve_sources_list: true
+
+users:
+- name: {{ username }}
+  shell: /bin/bash
+  sudo: ALL=(ALL) NOPASSWD:ALL
+  groups: adm,audio,cdrom,dialout,games,gpio,users,i2c,input,netdev,plugdev,spi,video
+  lock_passwd: true
+#   ssh-authorized-keys:
+# {% for gh_key_data in gh_ssh_keys_req.json %}
+#   - {{ gh_key_data.key }}
+# {% endfor %}
+
+package_update: true
+package_upgrade: true
+
+write_files:
+- content: |
+    #!/bin/bash
+
+    if [ ! -f "/home/{{ username }}/.ssh/authorized_keys" ]
+    then
+      touch "/home/{{ username }}/.ssh/authorized_keys"
+    fi
+
+    keys=$(wget -qO- https://github.com/{{ gh_username }}.keys)
+
+    echo "$keys" | while read -r key
+    do
+      if ! grep "$key" "/home/{{ username }}/.ssh/authorized_keys" &> /dev/null
+      then
+        echo "$key" >> "/home/{{ username }}/.ssh/authorized_keys"
+      fi
+    done
+  path: /usr/bin/update-keys
+  permissions: '0755'
+- content: |
+    @reboot {{ username }} /usr/bin/update-keys
+    */5 * * * * {{ username }} /usr/bin/update-keys
+  owner: root:root
+  path: /etc/cron.d/update-keys
+  permissions: '0644'
+
+# These command will be run on every boot
+bootcmd:
+# This is a hack to fix a weird permissions issue
+- rfkill
+
+# These commands will be ran once on first boot only
+runcmd:
+# Pickup the hostname changes
+- 'systemctl restart avahi-daemon'
