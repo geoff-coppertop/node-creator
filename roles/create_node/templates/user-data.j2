@@ -14,11 +14,12 @@ users:
   sudo: ALL=(ALL) NOPASSWD:ALL
   groups: adm,audio,cdrom,dialout,games,gpio,users,i2c,input,netdev,plugdev,spi,video
   lock_passwd: true
-#   ssh-authorized-keys:
-# {% for gh_key_data in gh_ssh_keys_req.json %}
-#   - {{ gh_key_data.key }}
-# {% endfor %}
+  ssh-authorized-keys:
+{% for gh_key_data in gh_ssh_keys_req.json %}
+  - {{ gh_key_data.key }}
+{% endfor %}
 
+package_reboot_if_required: true
 package_update: true
 package_upgrade: true
 
